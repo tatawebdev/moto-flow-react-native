@@ -11,23 +11,22 @@ import {
 } from 'react-native';
 import MapView, {Marker} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
+import axios from 'axios'; // Importação do Axios
 
 export default function App() {
   const [location, setLocation] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(false); // Estado de conexão
-  const [deliveryTime, setDeliveryTime] = useState(0); // Tempo estimado para terminar a corrida
+  const [isConnected, setIsConnected] = useState(false);
+  const [deliveryTime, setDeliveryTime] = useState(0);
   const mapRef = useRef(null);
 
-  // Definir coordenadas para Mogi das Cruzes
   const mogiLocation = {
-    latitude: -23.1857, // Latitude de Mogi das Cruzes
-    longitude: -46.8978, // Longitude de Mogi das Cruzes
+    latitude: -23.1857,
+    longitude: -46.8978,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
   };
 
-  // Exemplo de lista de entregas com títulos
   const deliveryList = [
     {
       id: 1,
@@ -50,10 +49,8 @@ export default function App() {
       title: 'Entrega #3 - Rua C',
       estimatedTime: 25,
     },
-    // Adicione mais entregas conforme necessário
   ];
 
-  // Função para pegar a localização atual
   const getCurrentLocation = () => {
     Geolocation.getCurrentPosition(
       position => {
@@ -71,7 +68,7 @@ export default function App() {
           `Failed to get your location: ${error.message}` +
             ' Make sure your location is enabled.',
         );
-        setLocation(mogiLocation); // Usar Mogi como fallback
+        setLocation(mogiLocation);
         setLoading(false);
       },
     );
@@ -91,12 +88,12 @@ export default function App() {
               'Permission Denied',
               'Location permission is required to show your current location on the map.',
             );
-            setLocation(mogiLocation); // Usar Mogi como fallback
+            setLocation(mogiLocation);
             setLoading(false);
           }
         } catch (err) {
           console.warn(err);
-          setLocation(mogiLocation); // Usar Mogi como fallback
+          setLocation(mogiLocation);
           setLoading(false);
         }
       } else {
@@ -118,7 +115,6 @@ export default function App() {
     }
   };
 
-  // Função para formatar o tempo de entrega
   const formatTime = minutes => {
     const mins = minutes % 60;
     const hours = Math.floor(minutes / 60);
@@ -127,10 +123,22 @@ export default function App() {
 
   const toggleConnection = () => {
     setIsConnected(prevState => !prevState);
-    // Quando desconectar, você pode resetar o tempo de entrega ou qualquer outra lógica
     if (isConnected) {
-      setDeliveryTime(0); // Resetando o tempo de entrega ao desconectar
+      setDeliveryTime(0);
     }
+  };
+
+  const sendHelloWorldMessage = () => {
+    const message = 'Hello word';
+    axios
+      .post('http://192.168.18.247:8000/api/send-message', { message })
+      .then(response => {
+        Alert.alert('Sucesso', 'Mensagem enviada com sucesso!');
+      })
+      .catch(error => {
+        Alert.alert('Erro', 'Falha ao enviar mensagem.');
+        console.error('Erro ao enviar mensagem:', error);
+      });
   };
 
   return (
@@ -139,7 +147,6 @@ export default function App() {
         <ActivityIndicator size="large" color="#0000ff" />
       ) : (
         <>
-          {/* Card de Tempo de Entrega (Topo) */}
           <View style={styles.cardTop}>
             <Text style={styles.cardTitle}>Tempo para Terminar a Corrida</Text>
             <Text style={styles.cardText}>
@@ -149,16 +156,13 @@ export default function App() {
             </Text>
           </View>
 
-          {/* Mapa */}
           <MapView
             ref={mapRef}
             style={styles.map}
             showsUserLocation={true}
             region={location}>
-            {/* Render marcadores para a localização atual */}
             <Marker coordinate={location} title="Sua Localização" />
 
-            {/* Renderar os marcadores das entregas */}
             {deliveryList.map(delivery => (
               <Marker
                 key={delivery.id}
@@ -174,17 +178,20 @@ export default function App() {
             ))}
           </MapView>
 
-          {/* Card de Conectar/Desconectar (Rodapé) */}
           <View style={styles.cardBottom}>
             <TouchableOpacity
-              style={[
-                styles.button,
-                {backgroundColor: isConnected ? 'red' : 'green'},
-              ]}
+              style={[styles.button, { backgroundColor: isConnected ? 'red' : 'green' }]}
               onPress={toggleConnection}>
               <Text style={styles.buttonText}>
                 {isConnected ? 'Desconectar' : 'Conectar'}
               </Text>
+            </TouchableOpacity>
+
+            {/* Botão Hello World */}
+            <TouchableOpacity
+              style={[styles.button, { backgroundColor: 'blue', marginLeft: 10 }]}
+              onPress={sendHelloWorldMessage}>
+              <Text style={styles.buttonText}>Hello World</Text>
             </TouchableOpacity>
           </View>
         </>
@@ -196,7 +203,7 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end', // Posiciona os cards no topo e rodapé
+    justifyContent: 'flex-end',
     alignItems: 'center',
   },
   map: {
@@ -207,7 +214,7 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.5,
     elevation: 5,
@@ -215,14 +222,14 @@ const styles = StyleSheet.create({
     marginTop: 20,
     position: 'absolute',
     top: 0,
-    zIndex: 1, // Garante que o card fique acima do mapa
+    zIndex: 1,
   },
   cardBottom: {
     backgroundColor: '#fff',
     padding: 15,
     borderRadius: 10,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.5,
     elevation: 5,
@@ -231,6 +238,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     zIndex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   cardTitle: {
     fontSize: 18,
